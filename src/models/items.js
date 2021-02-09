@@ -1,7 +1,13 @@
 const { DataTypes, Model } = require('sequelize');
 const sequelize = require('../database/sequelize')
 
-class Item extends Model { }
+class Item extends Model {
+    toJSON() {
+        let attributes = Object.assign({}, this.get())
+        delete attributes.owner.password
+        return attributes
+    }
+}
 Item.init(
     {
         id: {
@@ -26,7 +32,7 @@ Item.init(
                     }
                 }
             }
-        }
+        },
     },
     {
         sequelize,

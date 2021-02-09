@@ -5,6 +5,7 @@ const Item = require('./items')
 const { DataTypes, Model } = require('sequelize');
 const sequelize = require('../database/sequelize')
 
+
 class User extends Model {
     static findByCredentials = async (email, password) => {
         const user = await User.findOne({ where: { email } })
@@ -16,6 +17,13 @@ class User extends Model {
             throw new Error('Wrong password')
         }
         return user
+    };
+
+    toJSON() {
+        let attributes = Object.assign({}, this.get())
+        delete attributes.password
+        attributes.mobile = attributes.mobile.slice(0, 4) + "xxxxxxxxx"
+        return attributes
     }
 }
 
@@ -76,16 +84,15 @@ User.init(
 
     },
     {
+
         hooks: {
             beforeCreate: async (user) => {
                 const salt = await bcrypt.genSalt(10);
                 user.password = await bcrypt.hash(user.password, salt);
             },
         },
-
         sequelize,
         timestamps: false,
-
     }
 )
 
@@ -95,7 +102,5 @@ User.generateAuthToken = async function (userId) {
 }
 
 User.hasMany(Item, { onDelete: 'cascade', foreignKey: 'owner' })
-
-
 
 module.exports = User;
