@@ -94,15 +94,6 @@ User.generateAuthToken = async function (userId) {
     return token
 }
 
-// User.toJSON = async function () {
-//     const user = this
-//     const userObject = user.toObject()
-
-//     /// delete userObject.password
-//     userObject.mobile = userObject.mobile.slice(0, 4) + "xxxxxxxxx"
-//     return userObject
-// }
-
 User.hasMany(Item, { onDelete: 'cascade', foreignKey: 'owner' })
 
 

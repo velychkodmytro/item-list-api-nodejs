@@ -9,7 +9,6 @@ router.post('/users/register', async (req, res) => {
         const user = await User.create({
             ...req.body
         })
-        const settings = await User.toJSON(user.mobile)
         const token = await User.generateAuthToken(user.id)
         res.status(200).send({ user, token })
     } catch (error) {
