@@ -1,48 +1,36 @@
-const mongoose = require('mongoose')
+const { DataTypes, Model } = require('sequelize');
+const sequelize = require('../database/sequelize')
 
-
-const itemSchema = new mongoose.Schema({
-    title: {
-        type: String,
-        required: true,
-        unique: true,
-        trim: true,
-
-    },
-    price: {
-        type: Number,
-        default: 0,
-        required: true,
-        validate(value) {
-            if (value < 0) {
-                throw new Error('Price must be a positive number ')
+class Item extends Model { }
+Item.init(
+    {
+        id: {
+            type: DataTypes.INTEGER,
+            autoIncrement: true,
+            primaryKey: true,
+            allowNull: false
+        },
+        title: {
+            type: DataTypes.STRING,
+            allowNull: false,
+            unique: true,
+        },
+        price: {
+            type: DataTypes.INTEGER,
+            allowNull: false,
+            isNumeric: true,
+            validate: {
+                checkPrice(value) {
+                    if (value < 0) {
+                        throw new Error('Price must be a positive number ')
+                    }
+                }
             }
         }
     },
-
-    owner: {
-        type: mongoose.Schema.Types.ObjectId,
-        required: true,
-        ref: 'User'
-    },
-    image: {
-        type: Buffer,
-    },
-}, {
-    timestamps: true
-})
-
-itemSchema.methods.toJSON = function () {
-    const item = this
-    const itemObject = item.toObject()
-
-    delete itemObject.owner._id
-    delete itemObject.owner.password
-    delete itemObject.owner.tokens
-    delete itemObject._id
-
-    return itemObject
-}
-const Item = mongoose.model('Item', itemSchema)
+    {
+        sequelize,
+    }
+)
 
 module.exports = Item

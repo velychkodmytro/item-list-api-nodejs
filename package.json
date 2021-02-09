@@ -17,6 +17,9 @@
     "mongodb": "^3.6.3",
     "mongoose": "^5.11.13",
     "multer": "^1.4.2",
+    "mysql2": "^2.2.5",
+    "sequelize": "^6.5.0",
+    "tedious": "^11.0.3",
     "validator": "^13.5.2"
   },
   "devDependencies": {

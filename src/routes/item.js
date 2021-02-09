@@ -7,47 +7,39 @@ const authentication = require('../middleware/authentication')
 
 router.post('/items', authentication, async (req, res) => {
 
-    const item = new Item({
-        ...req.body,
-        owner: req.user,
-    })
-
+    const item = await Item.create({ ...req.body, owner: req.user.id })
     try {
-        await item.save()
-        res.status(200).send(item)
+        res.status(200).send({ item, user: req.user })
     } catch (error) {
-        res.status(400).send(error)
+        res.status(400).send({ error })
+
     }
 })
-
 
 router.get('/items', authentication, async (req, res) => {
 
     try {
-        const items = await Item.find({ owner: req.user._id }).populate('owner')
-
-        res.send(items)
-    } catch (e) {
-        res.status(500).send()
+        const items = await Item.findAll({
+            where: { owner: req.user.id }
+        })
+        res.status(200).send({ items, user: req.user })
+    } catch (error) {
+        res.status(404).send({ error })
     }
 })
 
 router.get('/items/:id', authentication, async (req, res) => {
-    const _id = req.params.id
+    const id = req.params.id
     try {
-
-        const item = await Item.findOne({ _id, owner: req.user._id }).populate('owner')
-
+        const item = await Item.findOne({ where: { id, owner: req.user.id } })
         if (!item) {
-            return res.status(404).send('Not found')
+            return res.status(404).send({ message: "Not found" })
 
         }
-        res.status(200).send(item)
-    } catch (e) {
-        res.status(500).send()
+        res.status(200).send({ item })
+    } catch (error) {
+        res.status(500).send({ error })
     }
-
-
 })
 
 router.patch('/items/:id', authentication, async (req, res) => {
@@ -56,59 +48,38 @@ router.patch('/items/:id', authentication, async (req, res) => {
     const isValidOperation = updates.every((update) => allowedUpdates.includes(update))
 
     if (!isValidOperation) {
-        return res.status(400).send({ error: 'Invalid Updates' })
+        return res.status(422).send({ message: "Invalid Updates" })
     }
 
     try {
-        const item = await Item.findOne({ _id: req.params.id, owner: req.user._id })
+        const item = await Item.findOne({ where: { id: req.params.id } })
 
         if (!item) {
-            return res.status(404).send()
+            return res.status(404).send({ message: "Cannot find an item" })
         }
 
         updates.forEach((update) => item[update] = req.body[update])
-
         await item.save()
-        res.send(item)
+        res.status(200).send(item)
+
     } catch (error) {
-        res.status(400).send(error)
+        res.status(403).send({ error })
     }
 })
 
 router.delete('/items/:id', authentication, async (req, res) => {
     try {
-        const item = await Item.findOneAndDelete({ _id: req.params.id, owner: req.user._id })
+        const item = await Item.destroy({ where: { id: req.params.id, owner: req.user.id } })
 
         if (!item) {
-            res.status(404).send()
+            res.status(404).send({ message: "Cannot find an item" })
         }
 
-        res.send(item)
-    } catch (e) {
-        res.status(500).send()
+        res.status(200).send({ message: "Item was deleted" })
+    } catch (error) {
+        res.status(422).send({ error })
     }
 })
 
-
-const upload = multer({
-    limits: {
-        fileSize: 5000000
-    },
-    fileFilter(req, file, cb) {
-        if (!file.originalname.match(/\.(jpg|jpeg|png)$/)) {
-            return cb(new Error('Please upload an image'))
-        }
-
-        cb(undefined, true)
-    }
-})
-router.post('/items/images', authentication, upload.single('images'), async (req, res) => {
-    req.item.images = req.file.buffer
-    await req.item.save()
-    res.send()
-    
-}), (error, req, res, next) => {
-    res.status(400).send({ error: error.message })
-}
 
 module.exports = router
